@@ -2,6 +2,7 @@ const Users = require('../models/userModel')
 const Payments = require('../models/paymentModel')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const crypto=require('crypto')
 
 const userCtrl = {
     register: async (req, res) =>{
@@ -123,8 +124,39 @@ const userCtrl = {
         } catch (err) {
             return res.status(500).json({msg: err.message})
         }
+    },
+    reset_password:async(req,res)=>{
+        crypto.randomBytes(32,(err,buffer)=>{
+            if(err){
+                console.log(err)
+            }
+            const token = buffer.toString("hex")
+            Users.findOne({email:req.body.email})
+            .then(User=>{
+                if(!User){
+                    return res.status(422).json({error:"user dont exists with that email and password"})
+                }
+                const accesstoken = createAccessToken({id: newUser._id})
+                const refreshtoken = createRefreshToken({id: newUser._id})
+                User.refreshtoken=Date.now() + 3600000
+                User.save().then((result)=>{
+                    transporter.sendMail({
+                        to:user.email,
+                        from:"shreyas0910@gmail.com",
+                        subject:"password reset",
+                        html:`
+                        <p>you requested for password reset</p>
+                        <h5>click in this <a href="https://covizon.herokuapp.com/reset_password/${token}">link</a> to reset</h5>
+                        `
+                    })
+                    res.json({message:"check your email"})
+                })
+
+            })
+        })
+
     }
- }
+}
 
 
 const createAccessToken = (user) =>{
